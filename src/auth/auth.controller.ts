@@ -47,19 +47,23 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  logout(@Res({ passthrough: true }) res: Response) {
+  async logout(
+    @CurrentUser() user: { id: number; email: string; sessionId: number },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.logout(user);
     clearAuthCookies(res, this.configService);
-    return { message: 'Logged out successfully' };
+    return result;
   }
 
   @Post('refresh')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  refresh(
-    @CurrentUser() user: { id: number; email: string },
+  async refresh(
+    @CurrentUser() user: { id: number; email: string; sessionId: number },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const tokens = this.authService.refresh(user);
+    const tokens = await this.authService.refresh(user);
     setAccessCookie(res, tokens.accessToken, this.configService);
     return tokens;
   }

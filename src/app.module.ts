@@ -7,6 +7,9 @@ import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TasksModule } from './tasks/tasks.module';
 import { WeeksModule } from './weeks/weeks.module';
+import { DiariesModule } from './diaries/diaries.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { JourneyModule } from './journey/journey.module';
 
 @Module({
   imports: [
@@ -15,6 +18,9 @@ import { WeeksModule } from './weeks/weeks.module';
     UsersModule,
     TasksModule,
     WeeksModule,
+    DiariesModule,
+    DashboardModule,
+    JourneyModule,
     PrismaModule,
   ],
   controllers: [AppController],

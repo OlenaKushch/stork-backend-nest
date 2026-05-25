@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { TokenService } from './token.service';
 
 type AuthTokens = { accessToken: string };
+type AuthenticatedUser = { id: number; email: string; sessionId: number };
 
 const profileGenderMap: Record<RegisterGender, Gender> = {
   boy: Gender.MALE,
@@ -70,12 +71,40 @@ export class AuthService {
     return this.issueToken(user.id, user.email);
   }
 
-  refresh(user: { id: number; email: string }): AuthTokens {
-    return this.issueToken(user.id, user.email);
+  refresh(user: AuthenticatedUser): Promise<AuthTokens> {
+    return this.issueToken(user.id, user.email, user.sessionId);
   }
 
-  private issueToken(userId: number, email: string): AuthTokens {
-    const accessToken = this.tokenService.signAccessToken(userId, email);
+  async logout(user: AuthenticatedUser): Promise<{ message: string }> {
+    await this.prisma.authSession.updateMany({
+      where: {
+        id: user.sessionId,
+        userId: user.id,
+        revokedAt: null,
+      },
+      data: { revokedAt: new Date() },
+    });
+
+    return { message: 'Logged out successfully' };
+  }
+
+  private async issueToken(
+    userId: number,
+    email: string,
+    sessionId?: number,
+  ): Promise<AuthTokens> {
+    const session =
+      sessionId !== undefined
+        ? { id: sessionId }
+        : await this.prisma.authSession.create({
+            data: { userId },
+            select: { id: true },
+          });
+    const accessToken = this.tokenService.signAccessToken(
+      userId,
+      email,
+      session.id,
+    );
 
     return { accessToken };
   }
