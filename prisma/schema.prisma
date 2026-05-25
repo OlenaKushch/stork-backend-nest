@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  profile   Profile?
+
+  @@map("users")
+}
+
+model Profile {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @unique @map("user_id")
+  name          String
+  childGender   Gender?   @map("child_gender")
+  dueDate       DateTime? @map("due_date")
+  avatarUrl     String?   @map("avatar_url")
+  avatarPublicId String?  @map("avatar_public_id") 
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNKNOWN
+}
