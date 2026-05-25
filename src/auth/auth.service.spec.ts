@@ -38,6 +38,10 @@ describe('AuthService', () => {
               findUnique: jest.fn(),
               create: jest.fn(),
             },
+            authSession: {
+              create: jest.fn(),
+              updateMany: jest.fn(),
+            },
           },
         },
       ],

@@ -10,11 +10,11 @@ export class TokenService {
     private readonly config: ConfigService,
   ) {}
 
-  signAccessToken(userId: number, email: string): string {
+  signAccessToken(userId: number, email: string, sessionId: number): string {
     const expiresIn = this.config.get<string>('JWT_EXPIRES_IN', '7d');
 
     return this.jwtService.sign(
-      { sub: userId, email },
+      { sub: userId, email, sid: sessionId },
       {
         secret: this.config.getOrThrow('JWT_SECRET'),
         expiresIn: expiresIn as SignOptions['expiresIn'],
