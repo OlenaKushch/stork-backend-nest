@@ -15,6 +15,7 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   profile   Profile?
+  tasks     Task[]
 
   @@map("users")
 }
@@ -39,4 +40,59 @@ enum Gender {
   MALE
   FEMALE
   UNKNOWN
+}
+
+model Task {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  name      String
+  date      DateTime
+  isDone    Boolean  @default(false) @map("is_done")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@map("tasks")
+}
+
+model BabyState {
+  id               Int      @id @default(autoincrement())
+  sourceId         String   @unique @map("source_id")
+  weekNumber       Int      @unique @map("week_number")
+  analogy          String?
+  babySize         Float    @map("baby_size")
+  babyWeight       Float    @map("baby_weight")
+  image            String
+  babyActivity     String   @map("baby_activity")
+  babyDevelopment  String   @map("baby_development")
+  interestingFact  String   @map("interesting_fact")
+  momDailyTips     Json     @map("mom_daily_tips")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("baby_states")
+}
+
+model MomState {
+  id          Int      @id @default(autoincrement())
+  sourceId    String   @unique @map("source_id")
+  weekNumber  Int      @unique @map("week_number")
+  feelings    Json
+  comfortTips Json     @map("comfort_tips")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("mom_states")
+}
+
+model Emotion {
+  id        Int      @id @default(autoincrement())
+  sourceId  String   @unique @map("source_id")
+  title     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("emotions")
 }

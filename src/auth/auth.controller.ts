@@ -1,9 +1,19 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import { clearAuthCookies, setAccessCookie } from '../common/cookie-utils';
 import { AuthService } from './auth.service';
+import { CurrentUser } from './decorators/current-user.decorator';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -35,9 +45,22 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   logout(@Res({ passthrough: true }) res: Response) {
     clearAuthCookies(res, this.configService);
     return { message: 'Logged out successfully' };
+  }
+
+  @Post('refresh')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  refresh(
+    @CurrentUser() user: { id: number; email: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const tokens = this.authService.refresh(user);
+    setAccessCookie(res, tokens.accessToken, this.configService);
+    return tokens;
   }
 }

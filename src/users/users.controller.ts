@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -6,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Patch,
-  Post,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -37,17 +37,17 @@ const avatarUploadOptions = {
   },
 };
 
-@Controller('user')
+@Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get()
+  @Get('me')
   getProfile(@CurrentUser() user: { id: number }) {
     return this.usersService.getProfile(user.id);
   }
 
-  @Patch()
+  @Patch('me')
   updateProfile(
     @CurrentUser() user: { id: number },
     @Body() dto: UpdateProfileDto,
@@ -55,17 +55,21 @@ export class UsersController {
     return this.usersService.updateProfile(user.id, dto);
   }
 
-  @Post('avatar')
+  @Patch('me/avatar')
   @UseInterceptors(FileInterceptor('avatar', avatarUploadOptions))
   @HttpCode(HttpStatus.OK)
   uploadAvatar(
     @CurrentUser() user: { id: number },
     @UploadedFile() file: Express.Multer.File,
   ) {
+    if (!file) {
+      throw new BadRequestException('Avatar file is required');
+    }
+
     return this.usersService.uploadAvatar(user.id, file.buffer);
   }
 
-  @Delete('avatar')
+  @Delete('me/avatar')
   @HttpCode(HttpStatus.OK)
   deleteAvatar(@CurrentUser() user: { id: number }) {
     return this.usersService.deleteAvatar(user.id);

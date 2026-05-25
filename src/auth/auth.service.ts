@@ -3,22 +3,27 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import type { SignOptions } from 'jsonwebtoken';
+import { Gender } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, RegisterGender } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
+import { TokenService } from './token.service';
+
+type AuthTokens = { accessToken: string };
+
+const profileGenderMap: Record<RegisterGender, Gender> = {
+  boy: Gender.MALE,
+  girl: Gender.FEMALE,
+};
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly configService: ConfigService,
-    private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly tokenService: TokenService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<{ accessToken: string }> {
+  async register(dto: RegisterDto): Promise<AuthTokens> {
     const email = dto.email.toLowerCase();
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
@@ -35,7 +40,11 @@ export class AuthService {
         email,
         password: passwordHash,
         profile: {
-          create: { name: dto.name },
+          create: {
+            name: dto.name,
+            ...(dto.gender && { childGender: profileGenderMap[dto.gender] }),
+            ...(dto.dueDate && { dueDate: new Date(dto.dueDate) }),
+          },
         },
       },
       select: { id: true, email: true },
@@ -44,7 +53,7 @@ export class AuthService {
     return this.issueToken(user.id, user.email);
   }
 
-  async login(dto: LoginDto): Promise<{ accessToken: string }> {
+  async login(dto: LoginDto): Promise<AuthTokens> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
     });
@@ -61,15 +70,12 @@ export class AuthService {
     return this.issueToken(user.id, user.email);
   }
 
-  private issueToken(userId: number, email: string): { accessToken: string } {
-    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN', '7d');
-    const accessToken = this.jwtService.sign(
-      { sub: userId, email },
-      {
-        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-        expiresIn: expiresIn as SignOptions['expiresIn'],
-      },
-    );
+  refresh(user: { id: number; email: string }): AuthTokens {
+    return this.issueToken(user.id, user.email);
+  }
+
+  private issueToken(userId: number, email: string): AuthTokens {
+    const accessToken = this.tokenService.signAccessToken(userId, email);
 
     return { accessToken };
   }

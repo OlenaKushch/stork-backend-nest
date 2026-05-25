@@ -19,13 +19,14 @@ export class UsersService {
         dueDate: true,
         avatarUrl: true,
         updatedAt: true,
-        user: { select: { email: true } },
+        user: { select: { id: true, email: true } },
       },
     });
 
     if (!profile) throw new NotFoundException('Профіль не знайдено');
 
     return {
+      id: profile.user.id,
       email: profile.user.email,
       name: profile.name,
       childGender: profile.childGender,
