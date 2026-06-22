@@ -4,12 +4,14 @@ import type { ConfigService } from '@nestjs/config';
 const ACCESS_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 днів
 
 export function getBaseCookieOptions(config: ConfigService) {
-  const isProd = config.get('NODE_ENV') === 'production';
+  const crossSite =
+    config.get('NODE_ENV') === 'production' || Boolean(process.env.RENDER);
 
   return {
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? ('none' as const) : ('lax' as const),
+    secure: crossSite,
+    sameSite: crossSite ? ('none' as const) : ('lax' as const),
+    path: '/',
   };
 }
 
