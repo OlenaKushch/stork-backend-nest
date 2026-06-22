@@ -86,6 +86,7 @@ export class WeeksService {
         babyWeight: true,
         image: true,
         babyActivity: true,
+        babyDevelopment: true,
         momDailyTips: true,
       },
     });
@@ -107,6 +108,7 @@ export class WeeksService {
         babyWeight: babyState.babyWeight,
         image: babyState.image,
         activity: babyState.babyActivity,
+        babyDevelopment: babyState.babyDevelopment,
       },
       momTip: momDailyTips[0] ?? null,
     };
