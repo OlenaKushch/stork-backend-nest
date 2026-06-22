@@ -47,6 +47,7 @@ export class DashboardService {
           babyWeight: true,
           image: true,
           babyActivity: true,
+          babyDevelopment: true,
           momDailyTips: true,
         },
       }),
@@ -98,7 +99,8 @@ export class DashboardService {
         sizeText: babyState.analogy
           ? `Ваш малюк зараз розміром з ${babyState.analogy}`
           : null,
-        achievement: babyState.babyActivity,
+        babyDevelopment: babyState.babyDevelopment,
+        achievement: babyState.babyDevelopment,
       },
       momTip: {
         text: this.pickMomTip(babyState.momDailyTips),
