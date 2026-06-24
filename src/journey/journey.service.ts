@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -32,7 +31,7 @@ export class JourneyService {
   }
 
   async getWeekDetails(userId: number, weekNumber: number) {
-    await this.ensureWeekIsAvailable(userId, weekNumber);
+    this.assertWeekNumber(weekNumber);
 
     const [baby, mom, tasks] = await Promise.all([
       this.getBabyDevelopmentData(weekNumber),
@@ -51,13 +50,13 @@ export class JourneyService {
     };
   }
 
-  async getBabyDevelopment(userId: number, weekNumber: number) {
-    await this.ensureWeekIsAvailable(userId, weekNumber);
+  async getBabyDevelopment(_userId: number, weekNumber: number) {
+    this.assertWeekNumber(weekNumber);
     return this.getBabyDevelopmentData(weekNumber);
   }
 
-  async getMomBody(userId: number, weekNumber: number) {
-    await this.ensureWeekIsAvailable(userId, weekNumber);
+  async getMomBody(_userId: number, weekNumber: number) {
+    this.assertWeekNumber(weekNumber);
     return this.getMomBodyData(weekNumber);
   }
 
@@ -123,18 +122,6 @@ export class JourneyService {
         updatedAt: true,
       },
     });
-  }
-
-  private async ensureWeekIsAvailable(
-    userId: number,
-    weekNumber: number,
-  ): Promise<void> {
-    this.assertWeekNumber(weekNumber);
-
-    const currentWeekNumber = await this.getCurrentWeekNumber(userId);
-    if (weekNumber > currentWeekNumber) {
-      throw new ForbiddenException('Future weeks are not available yet');
-    }
   }
 
   private async getCurrentWeekNumber(userId: number): Promise<number> {

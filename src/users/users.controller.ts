@@ -33,7 +33,9 @@ const avatarUploadOptions = {
       return;
     }
 
-    cb(new Error('Allowed formats: JPEG, PNG, WebP'), false);
+    // BadRequestException (а не голий Error), щоб NestJS повернув 400, а не 500:
+    // винен клієнт із некоректним файлом, а не сервер.
+    cb(new BadRequestException('Allowed formats: JPEG, PNG, WebP'), false);
   },
 };
 
