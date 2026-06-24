@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateTaskDto,
   taskDateToDate,
+  UpdateTaskDto,
   UpdateTaskStatusDto,
 } from './dto/task.dto';
 
@@ -43,6 +44,26 @@ export class TasksService {
     return this.prisma.task.update({
       where: { id: taskId },
       data: { isDone: dto.isDone },
+      select: this.taskSelect(),
+    });
+  }
+
+  async update(userId: number, taskId: number, dto: UpdateTaskDto) {
+    const task = await this.prisma.task.findFirst({
+      where: { id: taskId, userId },
+      select: { id: true },
+    });
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    return this.prisma.task.update({
+      where: { id: taskId },
+      data: {
+        name: dto.name,
+        date: taskDateToDate(dto.date),
+      },
       select: this.taskSelect(),
     });
   }

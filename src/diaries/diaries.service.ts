@@ -5,21 +5,27 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateDiaryEntryDto, UpdateDiaryEntryDto } from './dto/diary-entry.dto';
+import {
+  CreateDiaryEntryDto,
+  normalizeCreateDiaryInput,
+  normalizeUpdateDiaryInput,
+  UpdateDiaryEntryDto,
+} from './dto/diary-entry.dto';
 
 @Injectable()
 export class DiariesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: number, dto: CreateDiaryEntryDto) {
-    await this.ensureEmotionIdsExist(dto.emotionIds);
+    const input = this.resolveCreateInput(dto);
+    await this.ensureEmotionIdsExist(input.emotionIds);
 
     const entry = await this.prisma.diaryEntry.create({
       data: {
         userId,
-        title: dto.title,
-        content: dto.content,
-        emotions: this.buildEmotionCreateData(dto.emotionIds),
+        title: input.title,
+        content: input.content,
+        emotions: this.buildEmotionCreateData(input.emotionIds),
       },
       select: this.entrySelect(),
     });
@@ -52,17 +58,18 @@ export class DiariesService {
 
   async update(userId: number, entryId: number, dto: UpdateDiaryEntryDto) {
     await this.ensureEntryBelongsToUser(userId, entryId);
-    await this.ensureEmotionIdsExist(dto.emotionIds);
+    const input = this.resolveUpdateInput(dto);
+    await this.ensureEmotionIdsExist(input.emotionIds);
 
     const entry = await this.prisma.$transaction(async (tx) => {
-      if (dto.emotionIds !== undefined) {
+      if (input.emotionIds !== undefined) {
         await tx.diaryEntryEmotion.deleteMany({
           where: { diaryEntryId: entryId },
         });
 
-        if (dto.emotionIds.length > 0) {
+        if (input.emotionIds.length > 0) {
           await tx.diaryEntryEmotion.createMany({
-            data: dto.emotionIds.map((emotionId) => ({
+            data: input.emotionIds.map((emotionId) => ({
               diaryEntryId: entryId,
               emotionId,
             })),
@@ -73,8 +80,8 @@ export class DiariesService {
       return tx.diaryEntry.update({
         where: { id: entryId },
         data: {
-          ...(dto.title !== undefined && { title: dto.title }),
-          ...(dto.content !== undefined && { content: dto.content }),
+          ...(input.title !== undefined && { title: input.title }),
+          ...(input.content !== undefined && { content: input.content }),
         },
         select: this.entrySelect(),
       });
@@ -91,6 +98,27 @@ export class DiariesService {
     });
 
     return { message: 'Diary entry deleted successfully' };
+  }
+
+  private resolveCreateInput(dto: CreateDiaryEntryDto) {
+    try {
+      return normalizeCreateDiaryInput(dto);
+    } catch {
+      throw new BadRequestException('Content is required');
+    }
+  }
+
+  private resolveUpdateInput(dto: UpdateDiaryEntryDto) {
+    const input = normalizeUpdateDiaryInput(dto);
+
+    if (
+      (dto.emotions !== undefined || dto.emotionIds !== undefined) &&
+      input.emotionIds === undefined
+    ) {
+      throw new BadRequestException('Invalid emotion ids');
+    }
+
+    return input;
   }
 
   private async ensureEntryBelongsToUser(
@@ -138,6 +166,7 @@ export class DiariesService {
   private entrySelect() {
     return {
       id: true,
+      userId: true,
       title: true,
       content: true,
       createdAt: true,
@@ -155,16 +184,20 @@ export class DiariesService {
     };
   }
 
-  private formatEntry(entry: Prisma.DiaryEntryGetPayload<{
-    select: ReturnType<DiariesService['entrySelect']>;
-  }>) {
+  private formatEntry(
+    entry: Prisma.DiaryEntryGetPayload<{
+      select: ReturnType<DiariesService['entrySelect']>;
+    }>,
+  ) {
     return {
-      id: entry.id,
+      _id: String(entry.id),
       title: entry.title,
-      content: entry.content,
-      createdAt: entry.createdAt,
-      updatedAt: entry.updatedAt,
-      emotions: entry.emotions.map(({ emotion }) => emotion),
+      date: entry.createdAt.toISOString(),
+      description: entry.content,
+      emotions: entry.emotions.map(({ emotion }) => String(emotion.id)),
+      userId: String(entry.userId),
+      createdAt: entry.createdAt.toISOString(),
+      updatedAt: entry.updatedAt.toISOString(),
     };
   }
 }

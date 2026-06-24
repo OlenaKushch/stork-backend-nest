@@ -8,11 +8,16 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateTaskDto, UpdateTaskStatusDto } from './dto/task.dto';
+import {
+  CreateTaskDto,
+  UpdateTaskDto,
+  UpdateTaskStatusDto,
+} from './dto/task.dto';
 import { TasksService } from './tasks.service';
 
 @Controller('tasks')
@@ -29,6 +34,15 @@ export class TasksController {
   @Get()
   findAll(@CurrentUser() user: { id: number }) {
     return this.tasksService.findAll(user.id);
+  }
+
+  @Put(':id')
+  update(
+    @CurrentUser() user: { id: number },
+    @Param('id', ParseIntPipe) taskId: number,
+    @Body() dto: UpdateTaskDto,
+  ) {
+    return this.tasksService.update(user.id, taskId, dto);
   }
 
   @Patch(':id/status')
