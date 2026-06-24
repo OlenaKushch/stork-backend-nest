@@ -17,6 +17,10 @@ const profileGenderMap: Record<RegisterGender, Gender> = {
   girl: Gender.FEMALE,
 };
 
+// Фіктивний хеш для вирівнювання часу відповіді, коли юзера не знайдено
+// (захист від енумерації email через timing-атаку).
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('invalid-placeholder', 12);
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -59,12 +63,14 @@ export class AuthService {
       where: { email: dto.email.toLowerCase() },
     });
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+    // Завжди виконуємо bcrypt.compare (з фіктивним хешем за відсутності юзера),
+    // щоб час відповіді не залежав від існування email.
+    const isValidPassword = await bcrypt.compare(
+      dto.password,
+      user?.password ?? DUMMY_PASSWORD_HASH,
+    );
 
-    const isValidPassword = await bcrypt.compare(dto.password, user.password);
-    if (!isValidPassword) {
+    if (!user || !isValidPassword) {
       throw new UnauthorizedException('Invalid credentials');
     }
 

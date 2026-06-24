@@ -123,8 +123,9 @@ export class WeeksService {
   private calculateWeek(query: WeekQueryDto): WeekCalculation {
     if (query.dueDate) {
       const dueDate = this.parseDateOnly(query.dueDate);
-      const daysToBirth = Math.ceil(
-        (dueDate.getTime() - this.todayUtc().getTime()) / DAY_MS,
+      const daysToBirth = Math.max(
+        0,
+        Math.ceil((dueDate.getTime() - this.todayUtc().getTime()) / DAY_MS),
       );
       const pregnancyDay = PREGNANCY_DURATION_DAYS - daysToBirth;
       const weekNumber = this.clampWeek(Math.ceil(pregnancyDay / 7));

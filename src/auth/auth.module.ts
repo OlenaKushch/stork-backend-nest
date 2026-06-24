@@ -4,12 +4,13 @@ import { PassportModule } from '@nestjs/passport';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { SessionsCleanupService } from './sessions-cleanup.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TokenService } from './token.service';
 
 @Module({
   imports: [PrismaModule, PassportModule, JwtModule.register({})],
-  providers: [AuthService, TokenService, JwtStrategy],
+  providers: [AuthService, TokenService, JwtStrategy, SessionsCleanupService],
   controllers: [AuthController],
   exports: [AuthService, TokenService],
 })

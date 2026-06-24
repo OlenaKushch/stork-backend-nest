@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -15,6 +17,11 @@ import { EmotionsModule } from './emotions/emotions.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Базове вікно для rate limiting: 60 секунд. Сам ліміт вмикаємо точково
+    // через ThrottlerGuard + @Throttle лише на чутливих auth-роутах.
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    // Вмикає cron-задачі (зокрема прибирання застарілих auth-сесій).
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     TasksModule,
