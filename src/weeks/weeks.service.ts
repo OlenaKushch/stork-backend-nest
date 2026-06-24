@@ -26,11 +26,17 @@ export class WeeksService {
       select: { dueDate: true },
     });
 
+    const dueDate = profile?.dueDate
+      ? this.toDateOnlyString(profile.dueDate)
+      : query.dueDate;
+
+    // Авторизований юзер без онбордингу (немає dueDate і номера тижня)
+    // не повинен отримувати 400 — показуємо перший тиждень за замовчуванням,
+    // так само як це робить публічний дашборд.
     const calculation = this.calculateWeek({
       ...query,
-      dueDate: profile?.dueDate
-        ? this.toDateOnlyString(profile.dueDate)
-        : query.dueDate,
+      dueDate,
+      weekNumber: dueDate ? query.weekNumber : (query.weekNumber ?? 1),
     });
 
     return this.getDashboard(calculation);

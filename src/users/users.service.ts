@@ -69,16 +69,14 @@ export class UsersService {
       select: { avatarPublicId: true },
     });
 
-    // Видалити старе фото з Cloudinary якщо є
-    if (existing?.avatarPublicId) {
-      await this.cloudinary.delete(existing.avatarPublicId).catch(() => null);
-    }
-
+    // 1. Спочатку завантажуємо нове фото. Якщо це впаде — старе фото та
+    // запис у БД лишаються недоторканими (fail-safe).
     const result = await this.cloudinary.uploadStream(buffer, {
       folder: 'avatars',
       public_id: `user_${userId}`,
     });
 
+    // 2. Лише після успішного завантаження оновлюємо БД.
     await this.prisma.profile.update({
       where: { userId },
       data: {
@@ -86,6 +84,16 @@ export class UsersService {
         avatarPublicId: result.public_id,
       },
     });
+
+    // 3. Чистимо старий ассет тільки якщо його id відрізняється від нового.
+    // public_id детермінований і overwrite:true вже перезаписав старе фото,
+    // тож видалення за однакового id стерло б щойно завантажений аватар.
+    if (
+      existing?.avatarPublicId &&
+      existing.avatarPublicId !== result.public_id
+    ) {
+      await this.cloudinary.delete(existing.avatarPublicId).catch(() => null);
+    }
 
     return { avatarUrl: result.secure_url };
   }
