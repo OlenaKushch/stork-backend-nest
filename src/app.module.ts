@@ -10,6 +10,7 @@ import { WeeksModule } from './weeks/weeks.module';
 import { DiariesModule } from './diaries/diaries.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { JourneyModule } from './journey/journey.module';
+import { EmotionsModule } from './emotions/emotions.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { JourneyModule } from './journey/journey.module';
     DiariesModule,
     DashboardModule,
     JourneyModule,
+    EmotionsModule,
     PrismaModule,
   ],
   controllers: [AppController],

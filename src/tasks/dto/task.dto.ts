@@ -74,6 +74,17 @@ export class UpdateTaskStatusDto {
   isDone: boolean;
 }
 
+export class UpdateTaskDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(96)
+  name: string;
+
+  @Matches(DATE_ONLY_PATTERN, { message: 'Date format must be YYYY-MM-DD' })
+  @Validate(TaskDateMinTodayConstraint)
+  date: string;
+}
+
 export function taskDateToDate(value: string): Date {
   return parseDateOnly(value) ?? new Date(value);
 }

@@ -80,7 +80,17 @@ export class JourneyService {
       throw new NotFoundException('Baby development info not found');
     }
 
-    return babyState;
+    return {
+      weekNumber: babyState.weekNumber,
+      image: babyState.image,
+      imageAlt: babyState.analogy ?? 'Малюк',
+      analogy: babyState.analogy,
+      babySize: babyState.babySize,
+      babyWeight: babyState.babyWeight,
+      babyActivity: babyState.babyActivity,
+      babyDevelopment: babyState.babyDevelopment,
+      interestingFact: babyState.interestingFact,
+    };
   }
 
   private async getMomBodyData(weekNumber: number) {
