@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -52,5 +53,14 @@ export class TasksController {
     @Body() dto: UpdateTaskStatusDto,
   ) {
     return this.tasksService.updateStatus(user.id, taskId, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  remove(
+    @CurrentUser() user: { id: number },
+    @Param('id', ParseIntPipe) taskId: number,
+  ) {
+    return this.tasksService.remove(user.id, taskId);
   }
 }

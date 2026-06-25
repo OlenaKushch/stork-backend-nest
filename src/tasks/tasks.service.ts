@@ -68,6 +68,21 @@ export class TasksService {
     });
   }
 
+  async remove(userId: number, taskId: number): Promise<{ message: string }> {
+    const task = await this.prisma.task.findFirst({
+      where: { id: taskId, userId },
+      select: { id: true },
+    });
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    await this.prisma.task.delete({ where: { id: taskId } });
+
+    return { message: 'Task deleted successfully' };
+  }
+
   private taskSelect() {
     return {
       id: true,
